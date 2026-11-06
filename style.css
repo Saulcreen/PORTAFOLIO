@@ -1,0 +1,409 @@
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+
+  .viewer{
+    position:fixed;inset:0;
+    overflow:hidden;            /* sin scroll manual: solo teclado */
+    touch-action:none;
+    overscroll-behavior:none;
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+  }
+  .viewer::-webkit-scrollbar{display:none}
+
+  .page{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    height:100dvh;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .page .label{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:clamp(36px,9vw,120px);
+    font-weight:800;letter-spacing:-.02em;
+    color:rgba(255,255,255,.92);
+    text-align:center;padding:0 24px;
+  }
+  .page .label small{
+    display:block;margin-top:12px;
+    font-size:clamp(14px,2vw,24px);font-weight:500;letter-spacing:0;opacity:.85;
+  }
+  .page img.full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+  /* ---------- Diapositiva 1: vagón con naturaleza ---------- */
+  .hero .layer{position:absolute;inset:0;width:100%;height:100%}
+  .hero .fallback{background:center/cover no-repeat}
+  .hero .fallback.kb{animation:kb 40s ease-in-out infinite alternate}
+  @keyframes kb{from{transform:scale(1.04)}to{transform:scale(1.14) translate(-1.5%,1%)}}
+  .hero canvas{display:block}
+  .hero .fx{pointer-events:none}
+
+  /* oscurece suave detrás del título para que se lea */
+  .hero .shade{
+    background:radial-gradient(ellipse 72% 60% at 50% 50%,rgba(0,0,0,.48) 0%,rgba(0,0,0,.32) 30%,rgba(0,0,0,.14) 60%,rgba(0,0,0,.04) 82%,rgba(0,0,0,0) 100%);
+    opacity:0;transition:opacity 1.2s ease;
+  }
+  .hero.on .shade{opacity:1;transition:opacity 3.4s ease 1.8s}
+
+  .hero .title{
+    position:relative;z-index:5;
+    width:min(97vw,1800px,calc(86vh * 1.8462));height:auto;
+    pointer-events:none;user-select:none;
+    opacity:0;filter:blur(18px);transform:scale(1.07);
+    transition:opacity 1s ease,filter 1s ease,transform 1s ease;
+    will-change:opacity,filter,transform;
+  }
+  .hero.on .title{
+    opacity:1;filter:blur(0) drop-shadow(0 0 18px rgba(0,0,0,.55));transform:scale(1);
+    transition:opacity 3.4s cubic-bezier(.25,.6,.2,1) 2s,
+               filter 3.4s cubic-bezier(.25,.6,.2,1) 2s,
+               transform 4.2s cubic-bezier(.2,.7,.2,1) 2s;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .hero .title,.hero.on .title,.hero .shade,.hero.on .shade{transition:none}
+    .hero .fallback.kb{animation:none}
+  }
+
+
+  /* ---------- Diapositiva 2: cielo animado ---------- */
+  .sky{background:#1b2540}
+  .sky .layer{position:absolute;inset:-6%;width:112%;height:112%;
+    background:var(--sky) center/cover no-repeat;will-change:transform,filter,opacity;
+    animation-play-state:paused}
+  .sky.active .layer,.sky.active .sun{animation-play-state:running}
+  /* capa base: zoom lento + deriva */
+  .sky .a{animation:skyA 38s ease-in-out infinite alternate}
+  /* capa de brillo: se mueve al revés, cambia de tono y se mezcla en "screen" */
+  .sky .b{mix-blend-mode:screen;opacity:.3;animation:skyB 26s ease-in-out infinite alternate}
+  /* resplandor del sol que respira */
+  .sky .sun{position:absolute;left:64%;top:58%;width:46vmax;height:46vmax;margin:-23vmax 0 0 -23vmax;
+    background:radial-gradient(circle,rgba(255,244,214,.75) 0%,rgba(255,226,170,.28) 22%,rgba(255,200,150,0) 62%);
+    mix-blend-mode:screen;pointer-events:none;animation:sunPulse 7s ease-in-out infinite alternate}
+  .sky .menu{position:relative;z-index:3;list-style:none;align-self:center;
+    margin-right:auto;margin-left:clamp(24px,8vw,140px);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:clamp(20px,3.3vw,48px);font-weight:700;letter-spacing:-.01em;line-height:1.28;
+    color:rgba(255,255,255,.96);
+    text-shadow:0 2px 20px rgba(10,14,40,.8),0 0 4px rgba(10,14,40,.45)}
+  .sky .menu li{padding:.12em 0}
+  .sky .menu b{display:inline-block;min-width:1.5em;font-weight:600;opacity:.8}
+  @keyframes skyA{
+    from{transform:scale(1.02) translate3d(-2.4%,1.2%,0) rotate(-.6deg)}
+    to  {transform:scale(1.13) translate3d(2.4%,-1.6%,0) rotate(.6deg)}}
+  @keyframes skyB{
+    from{transform:scale(1.14) translate3d(2.8%,-1.4%,0) rotate(.8deg);filter:hue-rotate(-28deg) saturate(1.35) brightness(1.05)}
+    to  {transform:scale(1.04) translate3d(-2.8%,1.6%,0) rotate(-.8deg);filter:hue-rotate(34deg) saturate(1.7) brightness(1.2)}}
+  @keyframes sunPulse{from{opacity:.45;transform:scale(.92)}to{opacity:1;transform:scale(1.12)}}
+  @media (prefers-reduced-motion:reduce){.sky .layer,.sky .sun{animation:none}}
+
+
+  /* ---------- Pestañeo (transición hacia la diapositiva 2) ---------- */
+  .blink{position:fixed;inset:0;z-index:50;pointer-events:none;visibility:hidden}
+  .blink.run{visibility:visible}
+  .blink svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .blink .bloom{position:absolute;inset:0;opacity:0;mix-blend-mode:screen;
+    background:radial-gradient(ellipse 70% 60% at 62% 52%,rgba(255,232,196,.95),rgba(255,176,128,.4) 45%,rgba(255,150,110,0) 75%)}
+
+
+  /* ---------- Diapositiva 3: flor viva ---------- */
+  .page.flor{background:#020808}
+  .flor .stage{position:absolute;inset:0;will-change:transform,filter}
+  .flor .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .flor .fx{pointer-events:none}
+  .flor .titulo{
+    position:absolute;z-index:5;left:clamp(16px,3.2vw,70px);top:clamp(14px,3.4vh,60px);
+    width:min(33vw,640px);height:auto;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 14px rgba(255,255,255,.18)) drop-shadow(0 2px 10px rgba(0,0,0,.6));
+    opacity:0;transform:translateY(-10px);
+    transition:opacity .6s ease,transform .6s ease}
+  .flor.seen .titulo{opacity:1;transform:none;
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 1.4s,transform 2s cubic-bezier(.2,.7,.2,1) 1.4s}
+  .flor .texto{
+    position:absolute;z-index:5;left:clamp(16px,3.2vw,70px);
+    top:calc(clamp(14px,3.4vh,60px) + min(33vw,640px)*.31 + 4.6vh);
+    width:min(31vw,600px);margin:0;pointer-events:none;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;
+    font-size:clamp(14px,1.45vw,27px);line-height:1.55;letter-spacing:.01em;
+    color:rgba(255,255,255,.92);
+    text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 4px rgba(0,0,0,.6);
+    opacity:0;transform:translateY(-8px);
+    transition:opacity .6s ease,transform .6s ease}
+  .flor.seen .texto{opacity:1;transform:none;
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 2.2s,transform 2s cubic-bezier(.2,.7,.2,1) 2.2s}
+  /* fotografía con contorno blanco, a la derecha (la flor queda libre) */
+  .flor .foto{
+    position:absolute;z-index:5;margin:0;pointer-events:none;
+    right:clamp(16px,4vw,80px);top:clamp(24px,13vh,150px);
+    width:min(29vw,50vh);padding:clamp(8px,1.1vw,21px);
+    background:#f8f6f0;
+    box-shadow:0 22px 46px rgba(0,0,0,.7),0 3px 8px rgba(0,0,0,.55);
+    opacity:0;transform:translateY(-26px) rotate(8deg) scale(.96);
+    transition:opacity .6s ease,transform .6s ease}
+  .flor .foto img{display:block;width:100%;height:auto}
+  .flor.seen .foto{opacity:1;transform:rotate(3deg);
+    transition:opacity 1.6s cubic-bezier(.25,.6,.2,1) 2.9s,transform 1.9s cubic-bezier(.2,.8,.2,1) 2.9s}
+  @media (prefers-reduced-motion:reduce){.flor .titulo,.flor.seen .titulo,.flor .texto,.flor.seen .texto,.flor .foto,.flor.seen .foto{transition:none}}
+  .flor .fallback{background:#020808 center/cover no-repeat}
+  .flor .fallback.kb{animation:florkb 30s ease-in-out infinite alternate}
+  @keyframes florkb{from{transform:scale(1)}to{transform:scale(1.05) translate(-.6%,.4%)}}
+  @media (prefers-reduced-motion:reduce){.flor .fallback.kb{animation:none}}
+
+  /* ---------- Diapositiva 4: lago ---------- */
+  .page.lago{background:#0a1218}
+  .lago .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .lago .fallback{background:#0a1218 center/cover no-repeat}
+  .lago .fallback.kb{animation:florkb 30s ease-in-out infinite alternate}
+  @media (prefers-reduced-motion:reduce){.lago .fallback.kb{animation:none}}
+
+  .lago .titulo{
+    position:absolute;z-index:5;left:50%;top:clamp(10px,2.2vh,44px);
+    width:min(42vw,860px);height:auto;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 12px rgba(255,255,255,.2)) drop-shadow(0 2px 12px rgba(0,25,45,.7));
+    opacity:0;transform:translate(-50%,-10px);
+    transition:opacity .6s ease,transform .6s ease}
+  .lago.seen .titulo{opacity:1;transform:translate(-50%,0);
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 1.1s,transform 2s cubic-bezier(.2,.7,.2,1) 1.1s}
+  /* dos fotografías con contorno blanco, una en cada lateral */
+  .lago .foto{
+    position:absolute;z-index:5;margin:0;pointer-events:none;
+    top:clamp(110px,34vh,380px);
+    width:min(31vw,58vh);padding:clamp(8px,1.15vw,21px);
+    background:#f8f6f0;
+    box-shadow:0 20px 44px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5);
+    opacity:0;transition:opacity .6s ease,transform .6s ease}
+  .lago .foto img{display:block;width:100%;height:auto}
+  .lago .foto figcaption{margin:clamp(6px,.8vw,14px) 2px 0;text-align:center;color:#2b2a26;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;font-style:italic;
+    font-size:clamp(12px,1.25vw,24px);line-height:1.35}
+  .lago .foto.izq{left:clamp(14px,3vw,70px);transform:translateY(-24px) rotate(-8deg) scale(.96)}
+  .lago .foto.der{right:clamp(14px,3vw,70px);transform:translateY(-24px) rotate(8deg) scale(.96)}
+  .lago.seen .foto{opacity:1;
+    transition:opacity 1.6s cubic-bezier(.25,.6,.2,1) 1.9s,transform 1.9s cubic-bezier(.2,.8,.2,1) 1.9s}
+  .lago.seen .foto.izq{transform:rotate(-3deg)}
+  .lago.seen .foto.der{transform:rotate(3deg);transition-delay:2.3s}
+  @media (prefers-reduced-motion:reduce){.lago .titulo,.lago.seen .titulo,.lago .foto,.lago.seen .foto{transition:none}}
+
+  /* ---------- Diapositiva 5: agujero negro ---------- */
+  .page.espacio{background:#000}
+  .espacio .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .espacio .fallback{background:#000 center/cover no-repeat}
+  .espacio .fallback.kb{animation:florkb 30s ease-in-out infinite alternate}
+  @media (prefers-reduced-motion:reduce){.espacio .fallback.kb{animation:none}}
+  .espacio .titulo{
+    position:absolute;z-index:5;left:50%;top:clamp(8px,2vh,40px);
+    width:min(44vw,880px);height:auto;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 14px rgba(120,150,255,.35)) drop-shadow(0 2px 12px rgba(0,0,0,.8));
+    opacity:0;transform:translate(-50%,-10px) scale(.97);
+    transition:opacity .6s ease,transform .6s ease}
+  .espacio.seen .titulo{opacity:1;transform:translate(-50%,0) scale(1);
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 1.6s,transform 2.4s cubic-bezier(.2,.7,.2,1) 1.6s}
+  /* dos fotografías nocturnas con marco blanco, una en cada lateral */
+  /* fotos grandes: ocupan el ancho libre a cada lado y todo el alto que deja el título; marcos, márgenes y texto escalan con la pantalla */
+  .espacio{--pb:clamp(8px,1.1vw,22px);--pl:clamp(14px,2vw,44px);
+    --top:calc(4.2vh + min(44vw,880px)/3);--bot:3vh;
+    --ih:max(110px,min(calc((34vw - 2*var(--pb))/1.3285),calc(100vh - var(--top) - var(--bot) - 2*var(--pb) - 5vw)))}
+  .espacio .foto{position:absolute;z-index:5;margin:auto 0;top:var(--top);bottom:var(--bot);height:fit-content;padding:var(--pb);background:#fff;pointer-events:none;
+    box-shadow:0 18px 42px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.45);
+    opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .espacio .foto img{display:block;width:auto;height:var(--ih)}
+  .espacio .foto figcaption{width:0;min-width:100%;margin:clamp(6px,.9vw,18px) 2px 2px;text-align:center;color:#2b2a26;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;font-style:italic;
+    font-size:clamp(12px,1.25vw,26px);line-height:1.3}
+  .espacio .foto.izq{left:var(--pl)}
+  .espacio .foto.der{right:var(--pl)}
+  .espacio.seen .foto{opacity:1;transform:none;
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 2.6s,transform 2.2s cubic-bezier(.2,.8,.2,1) 2.6s}
+  .espacio.seen .foto.der{transition-delay:3.1s}
+  @media (prefers-reduced-motion:reduce){.espacio .titulo,.espacio.seen .titulo,.espacio .foto,.espacio.seen .foto{transition:none}}
+  /* ---------- Transición del telescopio (hacia la diapositiva 5) ---------- */
+  .scopecv{position:fixed;left:0;top:0;width:100%;height:100%;z-index:70;pointer-events:none;visibility:hidden}
+
+  /* ---------- Transición "mirar hacia abajo" (hacia la diapositiva 4) ---------- */
+  .lookdown{position:fixed;left:0;right:0;top:0;height:170vh;z-index:60;pointer-events:none;visibility:hidden;
+    transform:translateY(100vh);
+    background:linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,.55) 9%,rgba(0,0,0,.92) 20%,#000 32%,#000 100%)}
+  .lookdown.run{visibility:visible}
+
+  /* ---------- Transición por pétalo (hacia la diapositiva 3) ---------- */
+  .petal{position:fixed;inset:0;z-index:60;pointer-events:none;visibility:hidden}
+  .petal.run{visibility:visible}
+  .petal .fill{position:absolute;inset:0;background:#c2d4cc;opacity:0}
+  .petal svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+
+  /* ---------- Diapositiva 6: pradera ---------- */
+  .portalcv{position:fixed;left:0;top:0;width:100%;height:100%;z-index:75;pointer-events:none;visibility:hidden}
+  .page.pradera{background:#6fa7d8}
+  .pradera{--pb:clamp(8px,1.1vw,22px);--pl:clamp(12px,1.6vw,34px);--cap:5vw;
+    /* alto total disponible para las dos fotos apiladas (sin marcos ni textos) */
+    --bud:max(160px,calc(100vh - 6.6vh - 4*var(--pb) - 2*var(--cap)))}
+  /* título en su lugar original (izquierda, centrado en vertical); aparece con fundido suave y queda fijo */
+  .pradera .titulo{
+    position:absolute;z-index:5;left:clamp(16px,3.4vw,70px);top:0;bottom:0;margin-block:auto;
+    width:min(42vw,860px);height:auto;max-height:26vh;object-fit:contain;object-position:left center;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 22px rgba(20,40,90,.55)) drop-shadow(0 4px 14px rgba(0,0,0,.5));
+    opacity:0;transform:none;translate:none;animation:none;
+    transition:opacity .6s ease}
+  .pradera.seen .titulo{opacity:1;
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 2.6s}
+  /* dos fotografías con marco blanco en el lateral DERECHO: una arriba y otra abajo (la de abajo un poco más hacia el centro) */
+  .pradera .foto{position:absolute;z-index:5;margin:0;padding:var(--pb);background:#fff;pointer-events:none;
+    box-shadow:0 18px 42px rgba(0,0,0,.45),0 3px 8px rgba(0,0,0,.35);
+    opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .pradera .foto img{display:block;width:auto}
+  .pradera .foto figcaption{width:0;min-width:100%;margin:clamp(6px,.9vw,18px) 2px 2px;text-align:center;color:#2b2a26;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;font-style:italic;
+    font-size:clamp(12px,1.25vw,26px);line-height:1.3}
+  /* pantalla normal: una sobre otra, repartiéndose todo el alto */
+  .pradera .foto.arriba{right:var(--pl);top:2.5vh}
+  .pradera .foto.arriba img{height:min(calc(var(--bud)*.5556),33vw)}
+  .pradera .foto.abajo{right:calc(var(--pl) + 5vw);bottom:2.5vh}
+  .pradera .foto.abajo img{height:min(calc(var(--bud)*.4444),28vw)}
+  /* pantalla ancha (16:9 o más): una al lado de la otra, centradas en vertical, aprovechando todo el ancho libre a la derecha del título */
+  @media (min-aspect-ratio:7/4){
+    .pradera{--hb:max(100px,min(calc((53.5vw - var(--pl) - 4*var(--pb) - 1.2vw)/2.3835),calc((100vh - 5vh - 2*var(--pb) - var(--cap))/1.15)));--ha:calc(var(--hb)*1.15)}
+    .pradera .foto.arriba,.pradera .foto.abajo{bottom:auto}
+    .pradera .foto.arriba{top:max(2.5vh,calc((100vh - var(--ha) - 2*var(--pb) - var(--cap))/2));right:calc(var(--pl) + 1.529*var(--hb) + 2*var(--pb) + 1.2vw)}
+    .pradera .foto.abajo{top:max(2.5vh,calc((100vh - var(--hb) - 2*var(--pb) - var(--cap))/2));right:var(--pl)}
+    .pradera .foto.arriba img{height:var(--ha)}
+    .pradera .foto.abajo img{height:var(--hb)}
+  }
+  .pradera.seen .foto{opacity:1;transform:none;
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 3.2s,transform 2s cubic-bezier(.2,.8,.2,1) 3.2s}
+  .pradera.seen .foto.abajo{transition-delay:3.7s}
+  @media (prefers-reduced-motion:reduce){.pradera .titulo,.pradera.seen .titulo,.pradera .foto,.pradera.seen .foto{transition:none;animation:none}}
+  .pradera .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .pradera .fallback{background:center/cover no-repeat}
+  .pradera .fallback.kb{animation:florkb 30s ease-in-out infinite alternate}
+  @media (prefers-reduced-motion:reduce){.pradera .fallback.kb{animation:none}}
+
+  /* ---------- Diapositiva 7: ruinas verdes con fauna ---------- */
+  .page.fauna{background:#183a2c}
+  .fauna .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .fauna .fallback{background:#183a2c center/cover no-repeat;transform:scale(1.04)}
+  .fauna .fx{pointer-events:none}
+
+  /* texto "Modelo" + descripción en el lateral derecho de la diapositiva 7; entra con fundido suave la primera vez que se ve */
+  .fauna .modelobox{position:absolute;z-index:5;right:clamp(16px,3.4vw,70px);top:0;bottom:0;margin-block:auto;height:fit-content;
+    width:min(40vw,780px);display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.6vw,30px);
+    pointer-events:none;user-select:none;
+    opacity:0;transform:translateX(24px);
+    transition:opacity .6s ease,transform .6s ease}
+  .fauna.seen .modelobox{opacity:1;transform:none;
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 1.6s,transform 2.2s cubic-bezier(.2,.8,.2,1) 1.6s}
+  .fauna .modelo{display:block;width:100%;height:auto;max-height:30vh;object-fit:contain;
+    filter:drop-shadow(0 0 22px rgba(0,20,10,.55)) drop-shadow(0 4px 14px rgba(0,0,0,.5))}
+  .fauna .modelotxt{margin:0;width:100%;text-align:center;color:#fff;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;font-style:italic;
+    font-size:clamp(18px,2.3vw,44px);line-height:1.38;
+    text-shadow:0 2px 10px rgba(0,20,10,.9),0 0 3px rgba(0,0,0,.7)}
+  @media (max-aspect-ratio:1/1){.fauna .modelobox{width:62vw}.fauna .modelo{max-height:20vh}}
+  @media (prefers-reduced-motion:reduce){.fauna .modelobox,.fauna.seen .modelobox{transition:none;transform:none}}
+
+  /* fotografía con marco blanco en el lateral izquierdo de la diapositiva 7; aparece con fundido suave */
+  .fauna .retrato{position:absolute;z-index:5;left:clamp(16px,4vw,80px);top:0;bottom:0;margin:auto 0;height:fit-content;
+    padding:clamp(8px,1.1vw,22px);background:#fff;pointer-events:none;
+    box-shadow:0 18px 42px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.35);
+    opacity:0;transform:translateY(16px) rotate(-2deg);transition:opacity .6s ease,transform .6s ease}
+  .fauna .retrato img{display:block;height:min(74vh,60vw);width:auto}
+  .fauna.seen .retrato{opacity:1;transform:rotate(-2deg);
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 2.2s,transform 2.2s cubic-bezier(.2,.8,.2,1) 2.2s}
+  @media (prefers-reduced-motion:reduce){.fauna .retrato,.fauna.seen .retrato{transition:none}}
+  /* ---------- Diapositiva 8: ciudad verde ---------- */
+  .page.ciudad{background:#2c6a2c}
+  .ciudad .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .ciudad .fallback{background:#2c6a2c center/cover no-repeat;transform:scale(1.04)}
+  .ciudad .fx{pointer-events:none}
+  /* dos fotografías con marco blanco en los laterales de la diapositiva 8 (tableta a la izquierda, afiche a la derecha) */
+  .ciudad .foto8{position:absolute;z-index:5;bottom:clamp(14px,6.5vh,70px);margin:0;height:fit-content;
+    padding:clamp(7px,1vw,20px);background:#fff;pointer-events:none;
+    box-shadow:0 18px 42px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.35);opacity:0}
+  .ciudad .foto8 img{display:block;height:auto}
+  .ciudad .foto8.izq{left:clamp(16px,3.6vw,72px);transform:translateY(22px) rotate(-2.2deg)}
+  .ciudad .foto8.izq img{width:min(27vw,48vh*1.05,560px)}
+  .ciudad .foto8.der{right:clamp(16px,3.6vw,72px);transform:translateY(22px) rotate(1.8deg)}
+  .ciudad .foto8.der img{width:min(35vw,58vh*1.5,760px)}
+  .ciudad.seen .foto8{opacity:1;transition:opacity 2s cubic-bezier(.25,.6,.2,1) 2.8s,transform 2.2s cubic-bezier(.2,.8,.2,1) 2.8s}
+  .ciudad.seen .foto8.izq{transform:rotate(-2.2deg)}
+  .ciudad.seen .foto8.der{transform:rotate(1.8deg);transition-delay:3.2s}
+  @media (max-aspect-ratio:1/1){.ciudad .foto8.izq img{width:42vw}.ciudad .foto8.der img{width:46vw}}
+  @media (prefers-reduced-motion:reduce){.ciudad .foto8,.ciudad.seen .foto8{transition:none}}
+  /* título "Producto" arriba al centro de la diapositiva 8; aparece con fundido suave cuando termina la transición */
+  .ciudad .producto{position:absolute;z-index:5;left:0;right:0;margin-inline:auto;top:clamp(10px,4vh,56px);
+    width:min(46vw,900px);height:auto;max-height:30vh;object-fit:contain;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 22px rgba(0,25,60,.6)) drop-shadow(0 4px 14px rgba(0,0,0,.5));
+    opacity:0;transform:translateY(-18px);transition:opacity .6s ease,transform .6s ease}
+  .ciudad.seen .producto{opacity:1;transform:none;
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 2s,transform 2.2s cubic-bezier(.2,.8,.2,1) 2s}
+  @media (max-aspect-ratio:1/1){.ciudad .producto{width:74vw;max-height:18vh}}
+  @media (prefers-reduced-motion:reduce){.ciudad .producto,.ciudad.seen .producto{transition:none;transform:none}}
+  /* texto debajo del título "Producto" */
+  .ciudad .productotxt{position:absolute;z-index:5;left:0;right:0;margin:0 auto;text-align:center;color:#fff;
+    top:calc(clamp(10px,4vh,56px) + min(min(46vw,900px)/3,30vh) - 26px);width:min(62vw,1000px);text-wrap:balance;
+    font-family:Georgia,"Palatino Linotype",Palatino,"Times New Roman",serif;font-style:italic;
+    font-size:clamp(17px,1.95vw,38px);line-height:1.35;pointer-events:none;
+    text-shadow:0 2px 12px rgba(0,20,40,1),0 0 6px rgba(0,10,30,.9),0 0 2px rgba(0,0,0,.8);
+    opacity:0;transform:translateY(-12px);transition:opacity .6s ease,transform .6s ease}
+  .ciudad.seen .productotxt{opacity:1;transform:none;
+    transition:opacity 2s cubic-bezier(.25,.6,.2,1) 2.6s,transform 2.2s cubic-bezier(.2,.8,.2,1) 2.6s}
+  @media (max-aspect-ratio:1/1){.ciudad .productotxt{width:84vw;top:calc(clamp(10px,4vh,56px) + min(74vw/3,18vh) - 10px)}}
+  @media (prefers-reduced-motion:reduce){.ciudad .productotxt,.ciudad.seen .productotxt{transition:none;transform:none}}
+
+  /* ---------- Diapositiva 9: estanque de koi ---------- */
+  .page.koi{background:#0a2a24}
+  .koi .layer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .koi .fallback{background:#0a2a24 center/cover no-repeat;transform:scale(1.04)}
+  .koi .fx{pointer-events:none}
+  /* texto "Gracias" grande en el centro de la diapositiva 9; aparece con fundido suave cuando termina la transición */
+  .koi .gracias{position:absolute;z-index:5;left:0;right:0;top:0;bottom:0;margin:auto;
+    width:min(82vw,1700px);height:auto;max-height:70vh;object-fit:contain;pointer-events:none;user-select:none;
+    filter:drop-shadow(0 0 26px rgba(0,25,20,.65)) drop-shadow(0 4px 14px rgba(0,0,0,.5));
+    opacity:0;transform:scale(.96);transition:opacity .6s ease,transform .6s ease}
+  .koi.seen .gracias{opacity:1;transform:none;
+    transition:opacity 2.2s cubic-bezier(.25,.6,.2,1) 2s,transform 2.4s cubic-bezier(.2,.8,.2,1) 2s}
+  @media (max-aspect-ratio:1/1){.koi .gracias{width:92vw}}
+  @media (prefers-reduced-motion:reduce){.koi .gracias,.koi.seen .gracias{transition:none;transform:none}}
+  /* botón para descargar las diapositivas como PDF (esquina inferior derecha de la diapositiva 9) */
+  .koi .dlbtn{position:absolute;z-index:6;right:clamp(16px,2.6vw,48px);bottom:clamp(16px,3.6vh,48px);
+    width:clamp(48px,3.8vw,68px);height:clamp(48px,3.8vw,68px);padding:0;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;color:#fff;
+    border:1.5px solid rgba(255,255,255,.6);background:rgba(8,30,26,.42);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    box-shadow:0 6px 22px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transform:translateY(8px);
+    transition:opacity .6s ease,transform .6s ease,background .25s ease,border-color .25s ease}
+  .koi .dlbtn svg{width:46%;height:46%;display:block}
+  .koi.seen .dlbtn{opacity:.88;pointer-events:auto;transform:none;
+    transition:opacity 1.8s cubic-bezier(.25,.6,.2,1) 3.2s,transform 1.8s cubic-bezier(.2,.8,.2,1) 3.2s,background .25s ease,border-color .25s ease}
+  .koi.seen .dlbtn:hover,.koi.seen .dlbtn:focus-visible{opacity:1;background:rgba(8,30,26,.66);border-color:#fff;
+    transition:opacity .2s ease,background .25s ease,border-color .25s ease}
+  .koi .dlbtn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){.koi .dlbtn,.koi.seen .dlbtn{transition:none;transform:none}}
+  /* pantalla de progreso mientras se genera el PDF */
+  .pdfov{position:fixed;inset:0;z-index:200;display:none;place-items:center;background:#05100e;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff}
+  .pdfov.on{display:grid}
+  .pdfbox{width:min(70vw,340px);text-align:center}
+  .pdftxt{font-size:clamp(15px,1.6vw,20px);letter-spacing:.01em;margin-bottom:14px;opacity:.92}
+  .pdfbar{height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+  .pdfbar i{display:block;height:100%;width:0;background:#fff;transition:width .3s ease}
+  /* transición del edificio que cae (hacia la diapositiva 8) */
+  .fallcv{position:fixed;left:0;top:0;width:100%;height:100%;z-index:80;pointer-events:none;visibility:hidden}
+  /* transición del tren (hacia la diapositiva 7) */
+  .traincv{position:fixed;left:0;top:0;width:100%;height:100%;z-index:80;pointer-events:none;visibility:hidden}
+
+  /* transición de la lluvia (hacia la diapositiva 9) */
+  .raincv{position:fixed;left:0;top:0;width:100%;height:100%;z-index:80;pointer-events:none;visibility:hidden}
+
+  /* colores de las demás diapositivas */
+  .p1{background:#e63946}
+  .p2{background:#f4a300}
+  .p3{background:#e9c716}
+  .p4{background:#4caf50}
+  .p5{background:#2a9d8f}
+  .p6{background:#29b6f6}
+  .p7{background:#3a86ff}
+  .p8{background:#8338ec}
+  .p9{background:#ec407a}
